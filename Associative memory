@@ -1,0 +1,73 @@
+%Reading the image to a matrix, converting to grayscale and double
+inp1 = double(im2gray(imread("images\AudreyHepburn.jpg")));
+inp2 = double(rgb2gray(imread("images\BillGates.jpg")));
+inp3 = double(rgb2gray(imread("images\MrWhite.jpg")));
+inp4 = double(rgb2gray(imread("images\SheldonCooper.jpg")));
+inp5 = double(rgb2gray(imread("images\TaylorSwift.jpg")));
+
+%Convert to a column vector
+img1 = reshape(inp1, numel(inp1), 1);
+img2 = reshape(inp2, numel(inp2), 1);
+img3 = reshape(inp3, numel(inp3), 1);
+img4 = reshape(inp4, numel(inp4), 1);
+img5 = reshape(inp5, numel(inp5), 1);
+
+%Normalize the inputs
+norm_img1 = normc(img1);
+norm_img2 = normc(img2);
+norm_img3 = normc(img3);
+norm_img4 = normc(img4);
+norm_img5 = normc(img5);
+
+%Make the images noisy by adding a 20dB white noise
+% and normalize them
+noisy1 = normc(awgn(norm_img1, 20, 'measured'));
+noisy2 = normc(awgn(norm_img2, 20, 'measured'));
+noisy3 = normc(awgn(norm_img3, 20, 'measured'));
+noisy4 = normc(awgn(norm_img4, 20, 'measured'));
+noisy5 = normc(awgn(norm_img5, 20, 'measured'));
+
+%Hebbian learning rule
+P = [norm_img1 norm_img2 norm_img3 norm_img4 norm_img5];
+P_noisy =[noisy1 noisy2 noisy3 noisy4 noisy5];
+W = P * transpose(P);
+
+%Applying the Hebbian learning rule against the noisy inputs
+hebb_out1 = W * noisy1;
+hebb_out2 = W * noisy2;
+hebb_out3 = W * noisy3;
+hebb_out4 = W * noisy4;
+hebb_out5 = W * noisy5;
+
+%Hebbian correlation coefficient
+Pattern = {'Pattern 1'; 'Pattern 2'; 'Pattern 3'; 'Pattern 4'; 'Pattern 5'};
+Output1 = [corr2(norm_img1, hebb_out1); corr2(norm_img2, hebb_out1); corr2(norm_img3, hebb_out1); corr2(norm_img4, hebb_out1); corr2(norm_img5, hebb_out1)];
+Output2 = [corr2(norm_img1, hebb_out2); corr2(norm_img2, hebb_out2); corr2(norm_img3, hebb_out2); corr2(norm_img4, hebb_out2); corr2(norm_img5, hebb_out2)];
+Output3 = [corr2(norm_img1, hebb_out3); corr2(norm_img2, hebb_out3); corr2(norm_img3, hebb_out3); corr2(norm_img4, hebb_out3); corr2(norm_img5, hebb_out3)];
+Output4 = [corr2(norm_img1, hebb_out4); corr2(norm_img2, hebb_out4); corr2(norm_img3, hebb_out4); corr2(norm_img4, hebb_out4); corr2(norm_img5, hebb_out4)];
+Output5 = [corr2(norm_img1, hebb_out5); corr2(norm_img2, hebb_out5); corr2(norm_img3, hebb_out5); corr2(norm_img4, hebb_out5); corr2(norm_img5, hebb_out5)];
+
+Hebb_corr = table(Output1,Output2,Output3,Output4,Output5,'RowNames',Pattern)
+
+%Pseudo-inverse Rule
+t_P = transpose(P);
+t_plus = (t_P * P)\t_P;
+W_p = P * t_plus;
+
+%Applying the Pseudo Inverse against the noisy inputs
+pseudo_out1 = W_p * noisy1;
+pseudo_out2 = W_p * noisy2;
+pseudo_out3 = W_p * noisy3;
+pseudo_out4 = W_p * noisy4;
+pseudo_out5 = W_p * noisy5;
+
+img_pseudo1 = imshow(reshape(pseudo_out1, 75, 75),[])
+%Pseudo-inverse correlation coefficient
+Pattern = {'Pattern 1'; 'Pattern 2'; 'Pattern 3'; 'Pattern 4'; 'Pattern 5'};
+Output1 = [corr2(norm_img1, pseudo_out1); corr2(norm_img2, pseudo_out1); corr2(norm_img3, pseudo_out1); corr2(norm_img4, pseudo_out1); corr2(norm_img5, pseudo_out1)];
+Output2 = [corr2(norm_img1, pseudo_out2); corr2(norm_img2, pseudo_out2); corr2(norm_img3, pseudo_out2); corr2(norm_img4, pseudo_out2); corr2(norm_img5, pseudo_out2)];
+Output3 = [corr2(norm_img1, pseudo_out3); corr2(norm_img2, pseudo_out3); corr2(norm_img3, pseudo_out3); corr2(norm_img4, pseudo_out3); corr2(norm_img5, pseudo_out3)];
+Output4 = [corr2(norm_img1, pseudo_out4); corr2(norm_img2, pseudo_out4); corr2(norm_img3, pseudo_out4); corr2(norm_img4, pseudo_out4); corr2(norm_img5, pseudo_out4)];
+Output5 = [corr2(norm_img1, pseudo_out5); corr2(norm_img2, pseudo_out5); corr2(norm_img3, pseudo_out5); corr2(norm_img4, pseudo_out5); corr2(norm_img5, pseudo_out5)];
+
+Pseudo_corr = table(Output1,Output2,Output3,Output4,Output5,'RowNames',Pattern)
