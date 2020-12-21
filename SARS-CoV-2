@@ -1,0 +1,105 @@
+ %%%Pre-processing
+
+%Reading data in
+datap = readmatrix("datas\positives.csv");
+datan = readmatrix("datas\negatives.csv");
+
+%Creating the training data and targets
+trainval = [];
+neg= datan(1:457,:);
+tempval= datap(1:21,:);
+pos = repmat(tempval,21,1); %Repeated positive vals 21 times
+trainval= [neg;pos];
+
+train_targ = trainval( :,2);
+trainval( :,2) = []; %Removing target from input
+clear tempval
+
+
+%Creating the testing data and targets
+testval = [];
+testval= [datan(457:end,:);datap(22:end,:);];
+
+test_targ = testval( :,2);
+testval( :,2) = [];
+
+%Normalize the inputs to -1 and 1
+in_train = normalize(trainval,'range',[-1 1]);
+in_test = normalize(testval,'range',[-1 1]);
+
+%Initalizing weights, biases and other constants
+siz1 = [10,9];
+siz2 = [1,10];
+W1 = unifrnd(-0.5,0.5,siz1);
+W2 = unifrnd(-0.5,0.5,siz2);
+
+b1 = randn(10,1);
+b2 = randn(1);
+
+
+%%%Training the network
+LR = 0.05;
+error_thresh = 0.015;
+mse_vector(1) = 1;
+iteration = 1;
+
+%Weight Training using Backpropagation Algorithim
+tic
+while mse_vector(iteration) >= error_thresh
+    errors = zeros(1,898);
+    
+    for c = 1:898
+        a0 = transpose(in_train(c,:));
+        a1 = tansig((W1*a0)+b1);
+        a2 = tansig((W2*a1)+b2);
+        errors(1,c) = train_targ(c) - a2;
+        
+        sens2 = -2 * (1-(a2^2))*errors(1,c);
+        sens1 = diag((1-(a1.*a1))) * transpose(W2)*sens2;
+        
+        W2 = W2 - (LR*sens2*transpose(a1));
+        b2 = b2 - (LR*sens2);
+        
+        W1 =  W1 -(LR *sens1*a0');
+        b1 = b1 - (LR*sens1);   
+          
+  
+    end
+    mse_vector(iteration+1) = mse(errors);
+    iteration = iteration+1;
+end
+Elapsedtime = toc
+
+
+%%%Testing 
+
+test_out = [];
+
+for i = 1:length(in_test)
+    a0 = transpose(in_test(i,:));
+    out1 = tansig((W1*a0)+b1);
+    test_out(i,1) = tansig((W2*out1)+b2);
+end
+
+%%%Analysis
+
+%Training error vs # of iterations
+semilogy(mse_vector);
+xlabel("Iterations");
+ylabel("MSE");
+title("Figure 2: Training Error Curve");
+
+%Plot showing how the tested data compared against the targets
+
+plot(1:121,test_out);
+hold on
+plot(1:121,test_targ);
+ylabel("Output");
+title("Figure 3: Comparing Predicted Data against Expected Value");
+xlabel("Input");
+legend("Expected", "Predicted")
+hold off
+
+
+
+
